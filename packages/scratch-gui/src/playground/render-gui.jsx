@@ -44,7 +44,7 @@ const handleVmInit = vm => {
 
     // Handle postMessage from x-academy for future dynamic reloads
     window.addEventListener('message', event => {
-        const allowed = ['http://localhost:4200', 'https://x-academy-two.vercel.app'];
+        const allowed = ['http://localhost:4200', 'https://x-academy-two.vercel.app', 'https://brainza.ca'];
         if (!allowed.includes(event.origin)) return;
         if (event.data?.type === 'xa:load-project' && event.data.url) {
             fetch(event.data.url)
