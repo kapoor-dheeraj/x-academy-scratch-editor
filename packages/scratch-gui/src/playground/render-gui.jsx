@@ -24,6 +24,37 @@ const handleTelemetryModalOptOut = () => {
     log('User opted out of telemetry');
 };
 
+// X-ACADEMY: Read starter project URL from ?project= query param
+const xAcademyProjectUrl = new URLSearchParams(window.location.search).get('project');
+
+const handleVmInit = vm => {
+    // Load starter .sb3 from ?project=<r2-url> on initial iframe load
+    if (xAcademyProjectUrl) {
+        // Wait for the default blank project to finish loading, then replace it
+        vm.once('workspaceUpdate', () => {
+            fetch(xAcademyProjectUrl)
+                .then(r => {
+                    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                    return r.arrayBuffer();
+                })
+                .then(data => vm.loadProject(data))
+                .catch(err => log('[x-academy] project load failed:', err));
+        });
+    }
+
+    // Handle postMessage from x-academy for future dynamic reloads
+    window.addEventListener('message', event => {
+        const allowed = ['http://localhost:4200', 'https://x-academy-two.vercel.app'];
+        if (!allowed.includes(event.origin)) return;
+        if (event.data?.type === 'xa:load-project' && event.data.url) {
+            fetch(event.data.url)
+                .then(r => r.arrayBuffer())
+                .then(data => vm.loadProject(data))
+                .catch(err => log('[x-academy] project reload failed:', err));
+        }
+    });
+};
+
 /*
  * Render the GUI playground. This is a separate function because importing anything
  * that instantiates the VM causes unsupported browsers to crash
@@ -83,6 +114,7 @@ export default appTarget => {
                 backpackHost={backpackHost}
                 canSave={false}
                 onClickLogo={onClickLogo}
+                onVmInit={handleVmInit}
             />
     );
 };
